@@ -1,0 +1,85 @@
+Hola, DeepSeek.
+
+A. Tu rol será el de un desarrollador Rust senior.
+
+B. Como tal, debes escribir un programa, llamado backend_rust, que leerá y escribirá datos de una base de datos MySQL llamada "telemedicina" y proveerá una API http para acceder a consultas y actualizaciones de las tablas de la BD.
+
+C. Las rutas y sus respectivas consultas SQL son las siguientes:  
+
+1) /usuarios/{id}, método GET: 
+
+- ejecutará la siguiente consulta en MySQL:
+
+select id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus
+from usuarios
+where id = {id};
+
+- devolverá en formato JSON primero los campos id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso y estatus, agrupados en un campo "datos", más los campos adicionales cod_err y msg_err, que indicarán si se encontró o no el usuario (cod_error 0 y 1, respectivamente) y los mensajes respectivos. Por ejemplo, el JSON será:
+
+{ "datos": { "id": 1, "rut": "0010895960-6", "nombre". "CLAUDIO", ...}, "cod_err": 0, "msg_err": "OK" }
+
+2) /usuarios/, método GET: 
+
+- ejecutará la siguiente consulta en MySQL:
+
+select id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus
+from usuarios
+order by id;
+
+- devolverá en formato JSON la lista de registros, que incluirá, para cada registro, los campos id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso y estatus; además de la lista, el JSON incluirá los campos adicionales cod_err y msg_err, que indicarán si se encontraron o no datos (cod_error 0 y 1, respectivamente) y los mensajes respectivos. Por ejemplo, el JSON será:
+
+{ "datos": [<datos registro 1>, <datos registro 2>...], "cod_err": 0, "msg_err": "OK" }
+
+3) /usuarios/, método POST:
+
+- recibirá en su body un JSON con la estructura:
+
+{
+    "id": <id del usuario>,
+    "nombre": <nombre del usuario>,
+    "ap_paterno": <apellido paterno del usuario>,
+    "ap_materno": <apellido materno del usuario>,
+    "email": <email del usuario>,
+    "telefonos": <teléfonos del usuario>,
+    "cod_zona": <código de zona del usuario>,
+    "nivel_acceso": <nivel de acceso del usuario>,
+    "cod_cliente": <código de cliente del usuario>,
+    "clave_acceso": <clave acceso, en formato SHA1, del usuario>,
+    "estatus": <estado del usuario>
+}
+
+- si <id del usuario> no existe en la tabla telemedicina.usuarios, debe insertarse usando instrucción INSERT; en caso contrario, se actualiza el registro respectivo con UPDATE
+
+- la respuesta será un JSON con campos cod_err y msg_err; cod_err=0 indicará éxito en la operación, 1 indicará error; msg_err indicará "OK" si hubo éxito, y un mensaje de error en caso contrario
+
+4) /usuarios/{id}, método DELETE:
+
+- el programa Rust deberá borrar el registro cuyo id es igual a {id}:
+
+delete from usuarios
+where id={i}
+
+- la respuesta será un JSON con campos cod_err y msg_err; cod_err=0 indicará éxito en la operación, 1 indicará error; msg_err indicará "OK" si hubo éxito, y un mensaje de error en caso contrario
+
+D. Requerimientos no funcionales:
+
+1. Manejo de Errores Profesional:
+   - Uso de `thiserror` para definir tipos de errores claros
+   - Implementación de `ResponseError` para convertir errores en respuestas HTTP apropiadas
+
+2. Configuración Segura:
+   - Uso de `dotenv` para manejar credenciales
+   - La URL de la base de datos ahora se carga desde variables de entorno
+
+3. Pool de Conexiones:
+   - El pool se crea una vez al inicio y se comparte entre requests
+   - Evita crear nueva conexión en cada request
+
+4. Logging:
+   - Usar `env_logger` para registro de eventos
+
+6. Seguridad Mejorada:
+   - Consultas preparadas mantenidas para prevenir SQL injection
+   - Tipos fuertes en toda la aplicación
+
+

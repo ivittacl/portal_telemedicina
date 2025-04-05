@@ -1,3 +1,42 @@
+# Backend Rust para Telemedicina
+
+Voy a crear un backend en Rust que cumpla con todos los requisitos que has especificado. El sistema incluirá conexión a MySQL, API HTTP con las rutas solicitadas, manejo de errores profesional y todas las características de seguridad y robustez que mencionas.
+
+## Estructura del Proyecto
+
+Primero, creemos el proyecto con Cargo:
+
+```bash
+cargo new backend_rust
+cd backend_rust
+```
+
+## Cargo.toml
+
+```toml
+[package]
+name = "backend_rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+actix-rt = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+mysql = "24.0"
+dotenv = "0.15"
+thiserror = "1.0"
+env_logger = "0.10"
+log = "0.4"
+sha1 = "0.10"
+futures = "0.3"
+lazy_static = "1.4"
+```
+
+## Código Principal (main.rs)
+
+```rust
 use actix_web::{web, App, HttpResponse, HttpServer, Responder, delete, get, post};
 use mysql::prelude::*;
 use mysql::*;
@@ -288,3 +327,60 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+```
+
+## Archivo .env
+
+```env
+DATABASE_URL=mysql://user:password@localhost:3306/telemedicina
+RUST_LOG=info
+```
+
+## Explicación del Código
+
+1. **Configuración y Dependencias**:
+   - Usamos `actix-web` como framework web
+   - `mysql` para la conexión a la base de datos
+   - `dotenv` para manejar variables de entorno
+   - `thiserror` para manejo profesional de errores
+   - `env_logger` para logging
+
+2. **Pool de Conexiones**:
+   - Usamos `lazy_static` para crear un pool de conexiones compartido
+   - El pool se inicializa una vez al inicio de la aplicación
+
+3. **Estructuras de Datos**:
+   - Definimos estructuras para los usuarios y las respuestas JSON
+   - Implementamos `Serialize` y `Deserialize` para conversión JSON
+
+4. **Manejo de Errores**:
+   - Definimos un enum `AppError` con todos los posibles errores
+   - Implementamos `ResponseError` para convertir errores en respuestas HTTP apropiadas
+
+5. **Endpoints**:
+   - Implementamos los 4 endpoints solicitados con sus respectivas consultas SQL
+   - Usamos consultas preparadas para prevenir SQL injection
+   - Cada endpoint devuelve el formato JSON especificado
+
+6. **Seguridad**:
+   - Las credenciales de la BD se cargan desde variables de entorno
+   - Todas las consultas SQL usan parámetros preparados
+   - Logging de todos los errores
+
+## Ejecución del Proyecto
+
+1. Crea un archivo `.env` con tus credenciales de MySQL
+2. Ejecuta el servidor:
+
+```bash
+cargo run
+```
+
+El servidor estará disponible en `http://localhost:8080` con los siguientes endpoints:
+
+- `GET /usuarios/{id}` - Obtener un usuario por ID
+- `GET /usuarios` - Listar todos los usuarios
+- `POST /usuarios` - Crear o actualizar un usuario
+- `DELETE /usuarios/{id}` - Eliminar un usuario
+
+Este código cumple con todos los requisitos funcionales y no funcionales que especificaste, incluyendo manejo profesional de errores, seguridad, pool de conexiones y logging.

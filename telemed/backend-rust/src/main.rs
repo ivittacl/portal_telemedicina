@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder, delete, get, post};
+use actix_web::{web, App, HttpResponse, HttpServer, delete, get, post};
 use mysql::prelude::*;
 use mysql::*;
 use serde::{Deserialize, Serialize};
@@ -8,16 +8,35 @@ use thiserror::Error;
 use log::{info, error};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+use mysql::prelude::FromRow;
 
 // Configuración de la aplicación
+/*
 #[derive(Debug, Clone)]
 struct AppConfig {
     db_url: String,
 }
+    */
 
 // Estructuras de datos
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 struct Usuario {
+    id: u32,
+    rut: String,
+    nombre: String,
+    ap_paterno: String,
+    ap_materno: String,
+    email: String,
+    telefonos: String,
+    cod_zona: Option<String>,
+    nivel_acceso: Option<u8>,
+    cod_cliente: Option<u8>,
+    clave_acceso: String,
+    estatus: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UsuarioInput {
     id: u32,
     rut: String,
     nombre: String,
@@ -27,21 +46,7 @@ struct Usuario {
     telefonos: String,
     cod_zona: String,
     nivel_acceso: u8,
-    cod_cliente: String,
-    clave_acceso: String,
-    estatus: u8,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct UsuarioInput {
-    nombre: String,
-    ap_paterno: String,
-    ap_materno: String,
-    email: String,
-    telefonos: String,
-    cod_zona: String,
-    nivel_acceso: u8,
-    cod_cliente: String,
+    cod_cliente: u8,
     clave_acceso: String,
     estatus: u8,
 }
@@ -141,11 +146,14 @@ async fn get_usuario(id: web::Path<u32>) -> Result<HttpResponse, AppError> {
     let mut conn = get_conn()?;
     let query = "SELECT id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus FROM usuarios WHERE id = ?";
     
+    let id_val = id.into_inner(); // evitar mover dos veces
+    println!("id_val: {:#?}", id_val);
+
     let usuario: Option<Usuario> = conn.exec_first(
         query,
-        (id.into_inner(),),
+        (id_val,),
     )?;
-    
+
     match usuario {
         Some(u) => Ok(HttpResponse::Ok().json(UsuarioResponse {
             datos: Some(u),
@@ -157,6 +165,7 @@ async fn get_usuario(id: web::Path<u32>) -> Result<HttpResponse, AppError> {
             cod_err: 1,
             msg_err: "Usuario no encontrado".to_string(),
         })),
+        // None => Err(AppError::NotFound),
     }
 }
 
@@ -195,8 +204,8 @@ async fn post_usuario(usuario: web::Json<UsuarioInput>) -> Result<HttpResponse, 
     
     // Verificar si el usuario existe
     let exists: Option<u32> = conn.exec_first(
-        "SELECT id FROM usuarios WHERE email = ?",
-        (&usuario.email,),
+        "SELECT id FROM usuarios WHERE id = ?",
+        (&usuario.id,),
     )?;
     
     if let Some(id) = exists {
@@ -245,12 +254,15 @@ async fn post_usuario(usuario: web::Json<UsuarioInput>) -> Result<HttpResponse, 
 async fn delete_usuario(id: web::Path<u32>) -> Result<HttpResponse, AppError> {
     let mut conn = get_conn()?;
     
-    let affected = conn.exec_drop(
+    conn.exec_drop(
         "DELETE FROM usuarios WHERE id = ?",
         (id.into_inner(),),
     )?;
+
+    // Obtener filas afectadas de otra manera
+    let rows_affected = conn.affected_rows();
     
-    if affected.rows_affected() > 0 {
+    if rows_affected > 0 {
         Ok(HttpResponse::Ok().json(BasicResponse {
             cod_err: 0,
             msg_err: "OK".to_string(),

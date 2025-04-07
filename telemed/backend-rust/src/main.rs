@@ -207,29 +207,35 @@ async fn post_usuario(usuario: web::Json<UsuarioInput>) -> Result<HttpResponse, 
         "SELECT id FROM usuarios WHERE id = ?",
         (&usuario.id,),
     )?;
+
+    println!("&usuario.: {}, exists: {:?}", &usuario.id, exists);
     
     if let Some(id) = exists {
         // Actualizar usuario existente
+        println!("update");
         conn.exec_drop(
-            "UPDATE usuarios SET nombre = ?, ap_paterno = ?, ap_materno = ?, telefonos = ?, cod_zona = ?, nivel_acceso = ?, cod_cliente = ?, clave_acceso = ?, estatus = ? WHERE id = ?",
+            "UPDATE usuarios SET rut = ?, nombre = ?, ap_paterno = ?, ap_materno = ?, email = ?, telefonos = ?, cod_zona = ?, nivel_acceso = ?, cod_cliente = ?, clave_acceso = ?, estatus = ? WHERE id = ?",
             (
+                &usuario.rut,
                 &usuario.nombre,
                 &usuario.ap_paterno,
                 &usuario.ap_materno,
+                &usuario.email,
                 &usuario.telefonos,
                 &usuario.cod_zona,
                 &usuario.nivel_acceso,
                 &usuario.cod_cliente,
                 &usuario.clave_acceso,
                 &usuario.estatus,
-                id,
+                &usuario.id,
             ),
         )?;
     } else {
         // Insertar nuevo usuario
         conn.exec_drop(
-            "INSERT INTO usuarios (nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO usuarios (rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
+                &usuario.rut,
                 &usuario.nombre,
                 &usuario.ap_paterno,
                 &usuario.ap_materno,

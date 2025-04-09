@@ -1,0 +1,17 @@
+#[get("/{{ table_name }}/{id}")]
+async fn get_{{ singular_name }}(id: web::Path<{{ id_type }}>) -> Result<HttpResponse, AppError> {
+    {{ connection_code | indent(4) }}
+    
+    let query = "SELECT * FROM {{ table_name }} WHERE {{ primary_key }} = ?";
+    
+    let {{ singular_name }}: {{ struct_name }} = sqlx::query_as(query)
+        .bind(id.into_inner())
+        .fetch_one(&mut conn)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => AppError::NotFound("{{ table_name }} no encontrado"),
+            _ => AppError::DatabaseError(e.to_string()),
+        })?;
+
+    {{ response_code | indent(4) }}
+}

@@ -1,0 +1,40 @@
+#[put("/{{ table_name }}/{id}")]
+async fn update_{{ singular_name }}(
+    id: web::Path<{{ id_type }}>,
+    item: web::Json<{{ struct_name }}Update>,
+) -> Result<HttpResponse, AppError> {
+    {{ connection_code | indent(4) }}
+
+    let rows_affected = sqlx::query!(
+        r#"
+        UPDATE {{ table_name }}
+        SET
+            {% for column in columns if not column.is_primary %}
+            {{ column.name }} = ?{% if not loop.last %},{% endif %}
+            {% endfor %}
+        WHERE {{ primary_key }} = ?
+        "#,
+        {% for column in columns if not column.is_primary %}
+        item.{{ column.name }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+        id.into_inner()
+    )
+    .execute(&mut conn)
+    .await
+    .map_err(|e| AppError::DatabaseError(e.to_string()))?
+    .rows_affected();
+
+    if rows_affected == 0 {
+        return Err(AppError::NotFound("Registro no encontrado"));
+    }
+
+    let updated_item = sqlx::query_as!(
+        {{ struct_name }},
+        "SELECT * FROM {{ table_name }} WHERE {{ primary_key }} = ?",
+        id.into_inner()
+    )
+    .fetch_one(&mut conn)
+    .await?;
+
+    Ok(HttpResponse::Ok().json(updated_item))
+}

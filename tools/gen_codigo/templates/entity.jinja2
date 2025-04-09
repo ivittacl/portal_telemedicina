@@ -1,0 +1,18 @@
+#[derive(Debug, Clone, sqlx::FromRow, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct {{ struct_name }} {
+    {% for column in columns %}
+    pub {{ column.name }}: {{ column.type }}, {% if column.comment %}// {{ column.comment }}{% endif %}
+    {% endfor %}
+}
+
+impl {{ struct_name }} {
+    /// Crea una nueva instancia de {{ struct_name }}
+    pub fn new({% for column in columns if not column.is_auto_increment %}{{ column.name }}: {{ column.type }}{% if not loop.last %}, {% endif %}{% endfor %}) -> Self {
+        Self {
+            {% for column in columns %}
+            {{ column.name }}: {% if column.is_auto_increment %}Default::default(){% else %}{{ column.name }}{% endif %},
+            {% endfor %}
+        }
+    }
+}

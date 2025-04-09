@@ -1,0 +1,15 @@
+#[derive(Debug, Clone, Validate, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct {{ struct_name }}Update {
+    {% for column in columns if not column.is_primary %}
+    #[validate(
+        {% if not column.is_nullable %}
+        required(message = "El campo {{ column.name }} es requerido"),
+        {% endif %}
+        {% if "String" in column.type %}
+        length(min = 1, max = {{ column.mysql_type.split('(')[1].split(')')[0] if 'char' in column.mysql_type else 255 }})
+        {% endif %}
+    )]
+    pub {{ column.name }}: {{ "Option<" if column.is_nullable }}{{ column.type }}{{ ">" if column.is_nullable }},
+    {% endfor %}
+}

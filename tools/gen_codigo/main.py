@@ -32,35 +32,56 @@ def write_output(content: str, filename: str, subdir: str = None):
         f.write(content)
     print(f"✓ Archivo generado: {path}")
 
-def generate_code(metadata: Dict[str, Any], command: str):
-    """Genera el código basado en los metadatos y el comando"""
-    from generators.base import generate_all_handlers, generate_dtos, generate_entity
-    
-    if command == "all":
-        # Generar todo
-        handlers = generate_all_handlers(metadata)
-        dtos = generate_dtos(metadata)
-        entity = generate_entity(metadata)
+def generate_code(metadata: Dict[str, Any], command: str) -> bool:
+    """
+    Genera el código basado en los metadatos.
+    Devuelve True si tuvo éxito, False si falló.
+    """
+    from generators.base import (
+        validate_context,
+        generate_entity,
+        generate_dtos,
+        generate_all_handlers
+    )
+    from pathlib import Path
+    import traceback
+
+    try:
+        # Validar y completar el contexto
+        context = validate_context(metadata)
         
-        # Escribir archivos
-        write_output(entity, f"{metadata['table_name']}.rs", "entities")
-        write_output("\n\n".join(dtos.values()), f"{metadata['table_name']}_dtos.rs", "dtos")
-        
-        handlers_file = f"{metadata['table_name']}_handlers.rs"
-        write_output("\n\n".join(handlers.values()), handlers_file, "handlers")
-        
-        # Generar módulo principal
-        mod_content = f"pub mod entities::{metadata['table_name']};\n"
-        mod_content += f"pub mod handlers::{metadata['table_name']}_handlers;\n"
-        mod_content += f"pub mod dtos::{metadata['table_name']}_dtos;"
-        write_output(mod_content, "mod.rs")
-        
-    elif command == "handlers":
-        handlers = generate_all_handlers(metadata)
-        write_output("\n\n".join(handlers.values()), 
-                    f"{metadata['table_name']}_handlers.rs", 
-                    "handlers")
-    # ... otros comandos ...
+        if command == "all":
+            print(f"\n🔧 Generando código para tabla: {context['table_name']}")
+            
+            # Generar componentes
+            entity = generate_entity(context)
+            dtos = generate_dtos(context)
+            handlers = generate_all_handlers(context)
+            
+            # Crear directorios
+            output_dir = Path("generated")
+            (output_dir / "entities").mkdir(exist_ok=True, parents=True)
+            (output_dir / "dtos").mkdir(exist_ok=True)
+            (output_dir / "handlers").mkdir(exist_ok=True)
+            
+            # Escribir archivos
+            (output_dir / "entities" / f"{context['table_name']}.rs").write_text(entity)
+            (output_dir / "dtos" / f"{context['table_name']}_dtos.rs").write_text("\n\n".join(dtos.values()))
+            (output_dir / "handlers" / f"{context['table_name']}_handlers.rs").write_text("\n\n".join(
+                f"// {name.upper()}\n{code}" for name, code in handlers.items()
+            ))
+            
+            print(f"✅ Código generado en: {output_dir}")
+            return True
+            
+        else:
+            raise ValueError(f"Comando no soportado: {command}")
+            
+    except Exception as e:
+        print(f"\n❌ Error durante la generación: {str(e)}")
+        if os.getenv("DEBUG"):
+            traceback.print_exc()
+        return False
 
 def main():
     parser = argparse.ArgumentParser(

@@ -1,0 +1,27 @@
+#[post("/{{ table_name }}")]
+async fn create_{{ singular_name }}(
+    item: web::Json<{{ struct_name }}Create>,
+) -> Result<HttpResponse, AppError> {
+    {{ connection_code | indent(4) }}
+
+    let created_id = sqlx::query!(
+        r#"INSERT INTO {{ table_name }} (
+            {% for column in columns if not column.is_auto_increment %}
+            {{ column.name }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        ) VALUES (
+            {% for column in columns if not column.is_auto_increment %}
+            ?{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        )"#,
+        {% for column in columns if not column.is_auto_increment %}
+        item.{{ column.name }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    )
+    .execute(&mut conn)
+    .await
+    .map_err(|e| AppError::DatabaseError(e.to_string()))?
+    .last_insert_id();
+
+    {{ response_code | indent(4) }}
+}

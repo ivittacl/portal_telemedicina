@@ -1,0 +1,21 @@
+#[delete("/{{ table_name }}/{id}")]
+async fn delete_{{ singular_name }}(
+    id: web::Path<{{ id_type }}>,
+) -> Result<HttpResponse, AppError> {
+    {{ connection_code | indent(4) }}
+
+    let rows_affected = sqlx::query!(
+        "DELETE FROM {{ table_name }} WHERE {{ primary_key }} = ?",
+        id.into_inner()
+    )
+    .execute(&mut conn)
+    .await
+    .map_err(|e| AppError::DatabaseError(e.to_string()))?
+    .rows_affected();
+
+    if rows_affected == 0 {
+        return Err(AppError::NotFound("Registro no encontrado"));
+    }
+
+    Ok(HttpResponse::NoContent().finish())
+}

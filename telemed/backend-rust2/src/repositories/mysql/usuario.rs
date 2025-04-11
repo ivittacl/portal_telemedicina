@@ -3,23 +3,23 @@ use crate::{models::Usuario, error::AppError};
 use super::super::UsuarioRepository;
 
 #[derive(Clone)]
-pub struct MysqlUsuarioRepository {
+pub struct MysqlRepository {
     pool: Pool,
 }
 
-impl MysqlUsuarioRepository {
+impl MysqlRepository {
     pub fn new(pool: Pool) -> Self {
         Self { pool }
     }
 }
 
 #[async_trait::async_trait]
-impl UsuarioRepository for MysqlUsuarioRepository {
+impl UsuarioRepository for MysqlRepository {
     async fn get_by_id(&self, id: u32) -> Result<Option<Usuario>, AppError> {
         let mut conn = self.pool.get_conn().await?;
         let query = "SELECT id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus FROM usuarios WHERE id = ?";
         
-        let usuario = conn.exec_first::<Usuario, _, _>(query, (id,))
+        let usuario = conn.exec_first(query, (id,))
             .await?;
             
         Ok(usuario)
@@ -29,7 +29,7 @@ impl UsuarioRepository for MysqlUsuarioRepository {
         let mut conn = self.pool.get_conn().await?;
         let query = "SELECT id, rut, nombre, ap_paterno, ap_materno, email, telefonos, cod_zona, nivel_acceso, cod_cliente, clave_acceso, estatus FROM usuarios";
         
-        let usuarios = conn.query::<Usuario, _>(query)
+        let usuarios = conn.exec(query, Params::Empty)
             .await?;
             
         Ok(usuarios)

@@ -1,0 +1,4 @@
+# Ignorar artefactos de compilación
+/target
+**/*.rs.bk
+

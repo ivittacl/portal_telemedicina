@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use mysql_async::FromRow;
+use mysql_async::prelude::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Usuario {

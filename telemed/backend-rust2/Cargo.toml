@@ -1,15 +1,17 @@
 [package]
 name = "backend-rust2"
 version = "0.1.0"
-edition = "2025"
+edition = "2024"
 author = "ivitta"
 
 [dependencies]
 actix-web = "4"
-mysql_async = "0.32"
+mysql_async = { version = "0.32", features = ["tokio"] }
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dotenv = "0.15"
+thiserror = "1.0"
+lazy_static = "1.4"

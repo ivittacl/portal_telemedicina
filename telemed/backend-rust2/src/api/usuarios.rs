@@ -1,4 +1,4 @@
-uuse actix_web::{web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use crate::{
     models::{Usuario, UsuarioInput},
     app_state::AppState,

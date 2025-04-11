@@ -1,5 +1,5 @@
 use actix_web::web;
-use crate::repositories::mysql::MysqlUsuarioRepository;
+use crate::repositories::mysql::MysqlRepository;
 
 mod usuarios;
 

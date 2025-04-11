@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpServer};
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
+use mysql_async::Opts;
 
 mod config;
 mod models;
@@ -26,7 +27,8 @@ async fn main() -> std::io::Result<()> {
         .init();
     
     // Pool de conexiones MySQL
-    let pool = mysql_async::Pool::new(config.database_url);
+    let opts = Opts::from_url(&config.database_url).expect("Invalid database URL");
+    let pool = mysql_async::Pool::new(opts);
     
     // Repositorio
     let repository = MysqlRepository::new(pool);

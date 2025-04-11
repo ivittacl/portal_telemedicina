@@ -1,7 +1,8 @@
 use actix_web::{HttpResponse, ResponseError};
-use mysql::Error as MysqlError;
+use mysql_async::Error as MysqlError;
 use serde_json::Error as JsonError;
 use std::fmt;
+use std::env::VarError;
 use tracing::error;
 
 #[derive(Debug)]
@@ -55,8 +56,8 @@ impl From<MysqlError> for AppError {
     }
 }
 
-impl From<env::VarError> for AppError {
-    fn from(value: env::VarError) -> Self {
+impl From<VarError> for AppError {
+    fn from(value: VarError) -> Self {
         Self::Config(value.to_string())
     }
 }

@@ -1,5 +1,5 @@
 use actix_web::web;
-use crate::repositories::mysql::MysqlRepository;
+use crate::repositories::MysqlRepository;
 
 mod usuarios;
 
@@ -8,14 +8,14 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .service(
                 web::resource("/usuarios")
-                    .route(web::get().to(usuarios::get_all))
-                    .route(web::post().to(usuarios::create))
+                    .route(web::get().to(usuarios::get_all::<MysqlRepository>))
+                    .route(web::post().to(usuarios::create::<MysqlRepository>))
             )
             .service(
                 web::resource("/usuarios/{id}")
-                    .route(web::get().to(usuarios::get_by_id))
-                    .route(web::put().to(usuarios::update))
-                    .route(web::delete().to(usuarios::delete))
+                    .route(web::get().to(usuarios::get_by_id::<MysqlRepository>))
+                    .route(web::put().to(usuarios::update::<MysqlRepository>))
+                    .route(web::delete().to(usuarios::delete::<MysqlRepository>))
             )
     );
 }

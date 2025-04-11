@@ -2,7 +2,7 @@ use mysql_async::{prelude::*, Pool, Params};
 use crate::{models::Usuario, error::AppError};
 use super::super::UsuarioRepository;
 
-#[derive(Clone)]
+#[derive(Clone)]  // Añadido derive Clone
 pub struct MysqlRepository {
     pool: Pool,
 }

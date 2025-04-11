@@ -2,11 +2,10 @@
 name = "backend-rust2"
 version = "0.1.0"
 edition = "2024"
-author = "ivitta"
 
 [dependencies]
 actix-web = "4"
-mysql_async = { version = "0.32", features = ["tokio"] }
+mysql_async = "0.32"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 async-trait = "0.1"

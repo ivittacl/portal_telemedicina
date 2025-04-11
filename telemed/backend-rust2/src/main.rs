@@ -1,3 +1,45 @@
-fn main() {
-    println!("Hello, world!");
+use actix_web::{web, App, HttpServer};
+use tracing::info;
+use tracing_subscriber::{fmt, EnvFilter};
+
+mod config;
+mod models;
+mod error;
+mod repositories;
+mod api;
+mod app_state;
+
+use crate::{
+    config::Config,
+    repositories::{UsuarioRepository, MysqlRepository},
+    app_state::AppState,
+};
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // Configuración
+    let config = Config::from_env().expect("Failed to load configuration");
+    
+    // Logging
+    fmt()
+        .with_env_filter(EnvFilter::new(config.log_level))
+        .init();
+    
+    // Pool de conexiones MySQL
+    let pool = mysql_async::Pool::new(config.database_url);
+    
+    // Repositorio
+    let repository = MysqlRepository::new(pool);
+    let app_state = AppState::new(repository);
+    
+    info!("Starting server on {}", config.server_address);
+    
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(app_state.clone()))
+            .configure(api::configure)
+    })
+    .bind(config.server_address)?
+    .run()
+    .await
 }
